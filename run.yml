@@ -6,3 +6,4 @@
 
   tasks:
     - import_tasks: tasks/essential.yml
+    - import_tasks: tasks/remove_snap.yml
