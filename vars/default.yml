@@ -1,0 +1,9 @@
+---
+create_user: matt
+copy_local_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+packages:
+  - curl
+  - vim
+  - git
+  - ufw
