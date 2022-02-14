@@ -1,0 +1,31 @@
+---
+- name: Install nginx
+  apt:
+    name: "nginx"
+    state: latest
+
+
+- name: UFW - Allow nginx connections
+  ufw:
+    rule: allow
+    name: "Nginx Full"
+
+- name: Set server_name
+  lineinfile:
+    path: /etc/nginx/sites-available/default
+    state: present
+    regex: '^\t?server_name'
+    line: "{{'\t'}}server_name mateossh.me www.mateossh.me;"
+  register: nginx_config
+
+# https://serverfault.com/a/929369
+- name: Verify nginx config
+  become: yes
+  command: nginx -t
+  changed_when: false
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+  when: nginx_config.changed
