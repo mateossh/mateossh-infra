@@ -41,6 +41,7 @@
     append: true
     create_home: true
     shell: /bin/bash
+    update_password: on_create
 
 - name: Set authorized key for remote user
   authorized_key:
