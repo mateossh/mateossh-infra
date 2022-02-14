@@ -1,0 +1,69 @@
+---
+- name: Install fail2ban
+  apt:
+    name: "fail2ban"
+    state: latest
+
+- name: Check if jail.local exists
+  stat:
+    path: /etc/fail2ban/jail.conf
+  register: is_jail_exists
+
+- name: Create jail.local
+  ansible.builtin.copy:
+    src: /etc/fail2ban/jail.conf
+    dest: /etc/fail2ban/jail.local
+    remote_src: yes
+  when: not is_jail_exists.stat.exists
+
+
+- name: Use ufw instead of iptables
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: DEFAULT
+    option: banaction
+    value: ufw
+
+
+- name: Remove default jail
+  block:
+    - name: Check if defaults-debian.conf exists
+      stat:
+        path: /etc/fail2ban/jail.d/defaults-debian.conf
+      register: is_defaults_exists
+
+    - name: Remove defaults-debian.conf
+      ansible.builtin.file:
+        path: /etc/fail2ban/jail.d/defaults-debian.conf
+        state: absent
+      when: is_defaults_exists.stat.exists
+
+
+- name: Create sshd jail
+  block:
+    - name: Check if sshd.conf exists
+      stat:
+        path: /etc/fail2ban/jail.d/sshd.conf
+      register: is_sshdconf_exists
+
+    - name: Touch file
+      ansible.builtin.file:
+        path: /etc/fail2ban/jail.d/sshd.conf
+        state: touch
+        mode: '0644'
+      when: not is_sshdconf_exists.stat.exists
+
+    - name: Append content
+      block:
+        - name: Enable SSHD jail
+          community.general.ini_file:
+            path: /etc/fail2ban/jail.d/sshd.conf
+            section: sshd
+            option: enabled
+            value: true
+        - name: Make ban permanent
+          community.general.ini_file:
+            path: /etc/fail2ban/jail.d/sshd.conf
+            section: sshd
+            option: bantime
+            value: -1
